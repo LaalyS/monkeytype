@@ -23,7 +23,6 @@ import * as CustomBackgroundFilter from "../elements/custom-background-filter";
 import {
   ConfigValue,
   CustomBackgroundSchema,
-  CustomLayoutFluid,
 } from "@monkeytype/contracts/schemas/configs";
 import {
   getAllFunboxes,
@@ -432,10 +431,6 @@ async function initGroups(): Promise<void> {
     UpdateConfig.setCustomBackgroundSize,
     "button"
   ) as SettingsGroup<ConfigValue>;
-  // groups.customLayoutfluid = new SettingsGroup(
-  //   "customLayoutfluid",
-  //   UpdateConfig.setCustomLayoutfluid
-  // );
 }
 
 function reset(): void {
@@ -697,9 +692,30 @@ async function fillSettingsPage(): Promise<void> {
     Config.keymapSize
   );
 
-  $(".pageSettings .section[data-config-name='customLayoutfluid'] input").val(
-    Config.customLayoutfluid.replace(/#/g, " ")
-  );
+  const clfActive = Config.customLayoutfluid.split("#");
+  const clfElement = document.querySelector(
+    ".pageSettings .section[data-config-name='customLayoutfluid'] select"
+  ) as Element;
+
+  let clfHtml = "";
+  if (layoutsList) {
+    for (const layout of Object.keys(layoutsList)) {
+      const selected = clfActive.includes(layout) ? "selected" : "";
+      const text = layout.replace(/_/g, " ");
+      clfHtml += `<option value="${layout}" ${selected}>${text}</option>`;
+    }
+  }
+  clfElement.innerHTML = clfHtml;
+  new SlimSelect({
+    select: clfElement,
+    events: {
+      afterChange: (newVal): void => {
+        void UpdateConfig.setCustomLayoutfluid(
+          newVal.map((it) => it.value).join("#")
+        );
+      },
+    },
+  });
 
   $(".pageSettings .section[data-config-name='tapeMargin'] input").val(
     Config.tapeMargin
@@ -1329,36 +1345,6 @@ $(
         duration: 1,
       });
     }
-  }
-});
-
-$(
-  ".pageSettings .section[data-config-name='customLayoutfluid'] .inputAndButton button.save"
-).on("click", () => {
-  void UpdateConfig.setCustomLayoutfluid(
-    $(
-      ".pageSettings .section[data-config-name='customLayoutfluid'] .inputAndButton input"
-    ).val() as CustomLayoutFluid
-  ).then((bool) => {
-    if (bool) {
-      Notifications.add("Custom layoutfluid saved", 1);
-    }
-  });
-});
-
-$(
-  ".pageSettings .section[data-config-name='customLayoutfluid'] .inputAndButton .input"
-).on("keypress", (e) => {
-  if (e.key === "Enter") {
-    void UpdateConfig.setCustomLayoutfluid(
-      $(
-        ".pageSettings .section[data-config-name='customLayoutfluid'] .inputAndButton input"
-      ).val() as CustomLayoutFluid
-    ).then((bool) => {
-      if (bool) {
-        Notifications.add("Custom layoutfluid saved", 1);
-      }
-    });
   }
 });
 
